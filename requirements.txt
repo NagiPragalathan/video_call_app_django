@@ -1,0 +1,13 @@
+Django 
+django-ckeditor
+captcha
+requests
+whitenoise
+resend
+gspread
+oauth2client
+django-redis
+python-memcached
+pymemcache
+django-debug-toolbar
+django-cors-headers
