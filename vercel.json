@@ -1,28 +1,27 @@
 {
-    "builds": [{
+    "version": 2,
+    "builds": [
+      {
         "src": "video_call/wsgi.py",
         "use": "@vercel/python",
         "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
-    },
-    {
+      },
+      {
         "src": "build_files.sh",
         "use": "@vercel/static-build",
-        "config": { "distDir": "staticfiles_build" }
-    }],
-    "routes": [
-        {
-            "src": "/static/(.*)",
-            "dest": "/static/$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "video_call/wsgi.py"
+        "config": {
+          "distDir": "staticfiles_build"
         }
-
+      }
     ],
-    "env": {
-      "DJANGO_SETTINGS_MODULE": "video_call.settings",
-      "PYTHONUNBUFFERED": "1",
-      "PYTHONPATH": "."
-    }
-}
+    "routes": [
+      {
+        "src": "/static/(.*)",
+        "dest": "/static/$1"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "video_call/wsgi.py"
+      }
+    ]
+  }
