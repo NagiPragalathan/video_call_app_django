@@ -41,15 +41,23 @@
 
         let localStream;
         let peerConnection;
+
         const configuration = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' } // Google's STUN server
             ],
         };
-        const roomName = prompt("Enter room name for signaling:");
+
+        const roomName = prompt("Enter room name for signaling:") || 'default_room';
 
         async function startCall() {
             try {
+                // Ensure getUserMedia is supported
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert("Your browser does not support getUserMedia or it requires HTTPS.");
+                    return;
+                }
+
                 // Get local media stream
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 localVideo.srcObject = localStream;
@@ -81,10 +89,11 @@
                 await peerConnection.setLocalDescription(offer);
                 await sendSignalingMessage({ type: 'offer', sdp: offer.sdp });
 
-                // Poll for answer
+                // Poll for signaling messages
                 pollForSignalingMessages();
             } catch (error) {
                 console.error("Error starting call:", error);
+                alert(`Error: ${error.message}`);
             }
         }
 
@@ -103,26 +112,34 @@
         }
 
         async function sendSignalingMessage(message) {
-            await fetch(`https://video-call-app-django-omega.vercel.app/api/signaling/${roomName}/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message),
-            });
+            try {
+                await fetch(`https://starkshoot.fun/api/signaling/${roomName}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(message),
+                });
+            } catch (error) {
+                console.error("Error sending signaling message:", error);
+            }
         }
 
         async function pollForSignalingMessages() {
             setInterval(async () => {
-                const response = await fetch(`https://video-call-app-django-omega.vercel.app/api/signaling/${roomName}/`);
-                const data = await response.json();
+                try {
+                    const response = await fetch(`https://starkshoot.fun/api/signaling/${roomName}/`);
+                    const data = await response.json();
 
-                for (const message of data.messages) {
-                    if (message.type === 'offer') {
-                        await handleOffer(message);
-                    } else if (message.type === 'answer') {
-                        await handleAnswer(message);
-                    } else if (message.type === 'candidate') {
-                        await handleCandidate(message);
+                    for (const message of data.messages) {
+                        if (message.type === 'offer') {
+                            await handleOffer(message);
+                        } else if (message.type === 'answer') {
+                            await handleAnswer(message);
+                        } else if (message.type === 'candidate') {
+                            await handleCandidate(message);
+                        }
                     }
+                } catch (error) {
+                    console.error("Error polling signaling messages:", error);
                 }
             }, 2000); // Poll every 2 seconds
         }
